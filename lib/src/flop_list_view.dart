@@ -7,7 +7,7 @@ import 'widgets/scroll_view.dart';
 import 'widgets/viewport.dart';
 
 class FlopListView extends StatefulWidget {
-  const FlopListView({
+  const FlopListView.builder({
     super.key,
     this.physics,
     this.controller,
