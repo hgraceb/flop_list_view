@@ -1,7 +1,7 @@
 name: flop_list_view
-description: A new Flutter package project.
+description: Flop's ListView.
 version: 0.0.1
-homepage:
+homepage: https://github.com/hgraceb/flop_list_view
 
 environment:
   sdk: '>=2.18.2 <3.0.0'
