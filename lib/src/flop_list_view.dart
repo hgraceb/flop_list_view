@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import 'widgets/scroll_view.dart';
 import 'widgets/viewport.dart';
@@ -12,6 +11,7 @@ class FlopListView extends StatefulWidget {
     this.physics,
     this.controller,
     this.anchor = 0.5,
+    this.anchorMask = false,
     required this.itemCount,
     required this.itemBuilder,
     this.initialScrollIndex = 0,
@@ -24,6 +24,9 @@ class FlopListView extends StatefulWidget {
 
   /// 列表锚点
   final double anchor;
+
+  /// 是否为列表锚点添加遮罩显示
+  final bool anchorMask;
 
   /// 滚动方向
   final Axis scrollDirection;
@@ -94,7 +97,17 @@ class _FlopListViewState extends State<FlopListView> {
         SliverList(
           key: _centerKey,
           delegate: SliverChildBuilderDelegate(
-            (context, index) => _buildItem(centerIndex),
+            (context, index) => Stack(
+              children: [
+                _buildItem(centerIndex),
+                if (widget.anchorMask)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Container(color: Colors.purple.withOpacity(0.5)),
+                    ),
+                  ),
+              ],
+            ),
             childCount: widget.itemCount > 0 ? 1 : 0,
           ),
         ),
