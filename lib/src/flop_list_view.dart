@@ -10,8 +10,10 @@ class FlopListView extends StatefulWidget {
     super.key,
     this.physics,
     this.controller,
-    this.anchor = 0.5,
+    this.anchor = 0.0,
+    this.trailing = true,
     this.anchorMask = false,
+    this.trailingMask = false,
     required this.itemCount,
     required this.itemBuilder,
     this.initialScrollIndex = 0,
@@ -27,6 +29,12 @@ class FlopListView extends StatefulWidget {
 
   /// 是否为列表锚点添加遮罩显示
   final bool anchorMask;
+
+  /// 是否填充列表末尾空白部分
+  final bool trailing;
+
+  /// 是否为列表末尾空白部分添加遮罩显示
+  final bool trailingMask;
 
   /// 滚动方向
   final Axis scrollDirection;
@@ -118,6 +126,17 @@ class _FlopListViewState extends State<FlopListView> {
               childCount: widget.itemCount - centerIndex - 1,
             ),
           ),
+        if (widget.trailing && trailingFraction > 0)
+          SliverFillViewport(
+            padEnds: false,
+            viewportFraction: trailingFraction,
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => Container(
+                color: widget.trailingMask ? Colors.red.withOpacity(0.5) : null,
+              ),
+              childCount: 1,
+            ),
+          ),
       ],
     );
   }
@@ -136,6 +155,16 @@ class _FlopListViewState extends State<FlopListView> {
       }
     }
     return _centerIndex;
+  }
+
+  /// 列表末尾空白部分占比
+  double _trailingFraction = 1.0;
+  double get trailingFraction => _trailingFraction;
+  set trailingFraction(value) {
+    // 列表末尾空白部分占比只能减少不能增加
+    if (_trailingFraction > 0 && value < _trailingFraction) {
+      setState(() => _trailingFraction = value);
+    }
   }
 
   Widget _buildItem(int index) {
@@ -171,6 +200,10 @@ class _FlopListViewState extends State<FlopListView> {
         offset: offset - viewport.offset.pixels,
         viewport: _scrollController.position.viewportDimension,
       );
+      // 如果是最后一个列表项
+      if (widget.trailing && item.index == widget.itemCount - 1) {
+        trailingFraction = 1.0 - item.trailing;
+      }
       // 遍历获取最后符合条件的列表项作为锚点列表项
       if (item.leading <= widget.anchor && item.trailing >= widget.anchor) {
         initialIndex = item.index;
@@ -194,6 +227,8 @@ class _FlopListViewState extends State<FlopListView> {
     setState(() {
       _scrollController.jumpTo(0);
       _centerIndex = _initialIndex = index;
+      // 在锚点列表项改变后再重置列表末尾空白部分占比
+      _trailingFraction = 1.0;
     });
   }
 }
@@ -263,6 +298,8 @@ class FlopListController extends ChangeNotifier {
   UnmodifiableListView<FlopListItem> get items => UnmodifiableListView(_items);
 
   bool get isAttached => _state?._scrollController.hasClients == true;
+
+  ScrollPosition get position => _state!._scrollController.position;
 
   /// 更新列表项信息
   void updateItems(List<FlopListItem> items) {
