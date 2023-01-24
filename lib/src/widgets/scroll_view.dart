@@ -27,7 +27,11 @@ class UnboundedCustomScrollView extends CustomScrollView {
     super.keyboardDismissBehavior,
     super.restorationId,
     super.clipBehavior,
+    this.onPerformLayout,
   });
+
+  /// [RenderObject.performLayout] 执行完成后的回调
+  final VoidCallback? onPerformLayout;
 
   @override
   @protected
@@ -44,6 +48,7 @@ class UnboundedCustomScrollView extends CustomScrollView {
       cacheExtent: cacheExtent,
       center: center,
       anchor: anchor,
+      onPerformLayout: onPerformLayout,
     );
   }
 }

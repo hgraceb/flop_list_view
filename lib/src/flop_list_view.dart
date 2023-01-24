@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'widgets/scroll_view.dart';
 import 'widgets/viewport.dart';
@@ -67,9 +68,8 @@ class _FlopListViewState extends State<FlopListView> {
   @override
   void initState() {
     super.initState();
-    _centerIndex = _initialIndex = widget.initialScrollIndex;
     _scrollController = ScrollController();
-    _scrollController.addListener(_updateItemsForScroll);
+    _centerIndex = _initialIndex = widget.initialScrollIndex;
     _listController = widget.controller ?? FlopListController();
     _listController._attach(this);
   }
@@ -77,7 +77,6 @@ class _FlopListViewState extends State<FlopListView> {
   @override
   void dispose() {
     _listController._detach();
-    _scrollController.removeListener(_updateItemsForScroll);
     super.dispose();
   }
 
@@ -93,6 +92,7 @@ class _FlopListViewState extends State<FlopListView> {
       center: _centerKey,
       physics: widget.physics,
       controller: _scrollController,
+      onPerformLayout: _scheduleUpdateItems,
       scrollDirection: widget.scrollDirection,
       slivers: [
         if (centerIndex > 0)
@@ -176,45 +176,53 @@ class _FlopListViewState extends State<FlopListView> {
         );
   }
 
-  void _updateItemsForScroll() {
+  void _scheduleUpdateItems() {
     if (_isItemsUpdating) {
       return;
     }
     _isItemsUpdating = true;
-    RenderViewportBase? viewport;
-    int initialIndex = _initialIndex;
-    final List<FlopListItem> items = [];
-    for (int index = 0; index < widget.itemCount; index++) {
-      final globalKey = _FlopListViewChildGlobalKey(_listKey, index);
-      final box = globalKey.currentContext?.findRenderObject() as RenderBox?;
-      viewport ??= RenderAbstractViewport.of(box) as RenderViewportBase?;
-      if (box == null || !box.hasSize || viewport == null) {
-        continue;
-      }
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      RenderViewportBase? viewport;
+      int initialIndex = _initialIndex;
+      final List<FlopListItem> items = [];
+      for (int index = 0; index < widget.itemCount; index++) {
+        final globalKey = _FlopListViewChildGlobalKey(_listKey, index);
+        final box = globalKey.currentContext?.findRenderObject() as RenderBox?;
+        viewport ??= RenderAbstractViewport.of(box) as RenderViewportBase?;
+        if (box == null || !box.hasSize || viewport == null) {
+          continue;
+        }
 
-      final offset = viewport.getOffsetToReveal(box, 0.0).offset;
-      final item = FlopListItem(
-        index: index,
-        size: box.size,
-        axis: widget.scrollDirection,
-        offset: offset - viewport.offset.pixels,
-        viewport: _scrollController.position.viewportDimension,
-      );
-      // 如果是最后一个列表项
-      if (widget.trailing && item.index == widget.itemCount - 1) {
-        trailingFraction = 1.0 - item.trailing;
+        final offset = viewport.getOffsetToReveal(box, 0.0).offset;
+        final item = FlopListItem(
+          index: index,
+          size: box.size,
+          axis: widget.scrollDirection,
+          offset: offset - viewport.offset.pixels,
+          viewport: _scrollController.position.viewportDimension,
+        );
+        // 如果是最后一个列表项
+        if (widget.trailing && item.index == widget.itemCount - 1) {
+          trailingFraction = 1.0 - item.trailing;
+        }
+        // 遍历获取最后符合条件的列表项作为锚点列表项
+        if (item.leading <= widget.anchor && item.trailing >= widget.anchor) {
+          // 仅在 [ScrollPosition.activity] 为非 [DrivenScrollActivity] 时改变锚点
+          // 列表项，因为 [DrivenScrollActivity] 使用的是目标点的绝对位置，在改变锚点列表项
+          // 时调用 [ScrollPosition.correctBy] 后又会被马上还原，进而导致锚点列表项快速
+          // 变动，目前仅在使用 [ScrollPosition.animateTo] 方法时可能出现此问题。
+          if (_scrollController.position.activity is! DrivenScrollActivity) {
+            initialIndex = item.index;
+          }
+        }
+        items.add(item);
       }
-      // 遍历获取最后符合条件的列表项作为锚点列表项
-      if (item.leading <= widget.anchor && item.trailing >= widget.anchor) {
-        initialIndex = item.index;
+      if (initialIndex != _initialIndex) {
+        setState(() => _initialIndex = initialIndex);
       }
-      items.add(item);
-    }
-    if (initialIndex != _initialIndex) {
-      setState(() => _initialIndex = initialIndex);
-    }
-    _listController.updateItems(items);
-    _isItemsUpdating = false;
+      _listController.updateItems(items);
+      _isItemsUpdating = false;
+    });
   }
 
   /// 跳转到指定列表项位置

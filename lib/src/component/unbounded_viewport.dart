@@ -16,10 +16,14 @@ class UnboundedViewport extends Viewport {
     super.cacheExtentStyle,
     super.clipBehavior,
     super.slivers,
+    this.onPerformLayout,
   });
 
+  /// [RenderObject.performLayout] 执行完成后的回调
+  final VoidCallback? onPerformLayout;
+
   @override
-  RenderViewport createRenderObject(BuildContext context) {
+  UnboundedRenderViewport createRenderObject(BuildContext context) {
     return UnboundedRenderViewport(
       axisDirection: axisDirection,
       crossAxisDirection: crossAxisDirection ?? Viewport.getDefaultCrossAxisDirection(context, axisDirection),
@@ -28,7 +32,21 @@ class UnboundedViewport extends Viewport {
       cacheExtent: cacheExtent,
       cacheExtentStyle: cacheExtentStyle,
       clipBehavior: clipBehavior,
+      onPerformLayout:onPerformLayout,
     );
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, UnboundedRenderViewport renderObject) {
+    renderObject
+      ..axisDirection = axisDirection
+      ..crossAxisDirection = crossAxisDirection ?? Viewport.getDefaultCrossAxisDirection(context, axisDirection)
+      ..anchor = anchor
+      ..offset = offset
+      ..cacheExtent = cacheExtent
+      ..cacheExtentStyle = cacheExtentStyle
+      ..clipBehavior = clipBehavior
+      ..onPerformLayout = onPerformLayout;
   }
 }
 
@@ -43,7 +61,18 @@ class UnboundedRenderViewport extends RenderViewport {
     super.cacheExtent,
     super.cacheExtentStyle,
     super.clipBehavior,
-  });
+    VoidCallback? onPerformLayout,
+  }) : _onPerformLayout = onPerformLayout;
+
+  /// [RenderObject.performLayout] 执行完成后的回调
+  VoidCallback? get onPerformLayout => _onPerformLayout;
+  VoidCallback? _onPerformLayout;
+  set onPerformLayout(VoidCallback? value) {
+    if (_onPerformLayout == value) {
+      return;
+    }
+    _onPerformLayout = value;
+  }
 
   static const int _maxLayoutCycles = 10;
 
@@ -93,7 +122,7 @@ class UnboundedRenderViewport extends RenderViewport {
       if (correction != 0.0) {
         offset.correctBy(correction);
       } else {
-        /// region Difference from [RenderViewport].
+        // region Difference from [RenderViewport].
         final top = _minScrollExtent + mainAxisExtent * anchor;
         final bottom = _maxScrollExtent - mainAxisExtent * (1.0 - anchor);
         final maxScrollOffset = math.max(math.min(0.0, top), bottom);
@@ -101,7 +130,7 @@ class UnboundedRenderViewport extends RenderViewport {
         if (offset.applyContentDimensions(minScrollOffset, maxScrollOffset)) {
           break;
         }
-        /// endregion Difference from [RenderViewport].
+        // endregion Difference from [RenderViewport].
       }
       count += 1;
     } while (count < _maxLayoutCycles);
@@ -129,5 +158,9 @@ class UnboundedRenderViewport extends RenderViewport {
       }
       return true;
     }());
+
+    // region Difference from [RenderViewport].
+    onPerformLayout?.call();
+    // endregion Difference from [RenderViewport].
   }
 }
