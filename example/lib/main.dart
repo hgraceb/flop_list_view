@@ -35,20 +35,21 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _itemCount = 100;
   late final List<int> _itemHeights;
+  final _flopListController = FlopListController();
 
   @override
   void initState() {
     super.initState();
     final heightGenerator = Random(2147483647);
     _itemHeights = List.generate(_itemCount, (index) {
-      return 100 + heightGenerator.nextInt(100);
+      return 100 + heightGenerator.nextInt(200);
     });
   }
 
   Widget _buildItem(String name, int index) {
     return FutureBuilder(
       future: Future.delayed(
-        Duration(milliseconds: 1000 + _itemHeights[index]),
+        Duration(milliseconds: 1000 + _itemHeights[index] * 5),
         () => _itemHeights[index].toDouble(),
       ),
       builder: (context, snapshot) {
@@ -92,28 +93,38 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
-      body: Row(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _itemCount,
-              controller: ScrollController(initialScrollOffset: 5400),
-              itemBuilder: (context, index) {
-                return _buildItem('ListView', index);
-              },
+      body: FlopListView.builder(
+        anchor: 0.0,
+        trailing: true,
+        anchorMask: true,
+        trailingMask: true,
+        itemCount: _itemCount,
+        controller: _flopListController,
+        initialScrollIndex: _itemCount - 1,
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) => _buildItem('FlopListView', index),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Flexible(
+              child: FloatingActionButton(
+                onPressed: () => _flopListController.jumpTo(0),
+                child: const Icon(Icons.keyboard_double_arrow_up),
+              ),
             ),
-          ),
-          Expanded(
-            child: FlopListView.builder(
-              anchor: 0.0,
-              itemCount: _itemCount,
-              initialScrollIndex: 50,
-              itemBuilder: (context, index) {
-                return _buildItem('FlopListView', index);
-              },
+            const Flexible(child: Padding(padding: EdgeInsets.all(8.0))),
+            Flexible(
+              child: FloatingActionButton(
+                onPressed: () => _flopListController.jumpTo(_itemCount - 1),
+                child: const Icon(Icons.keyboard_double_arrow_down),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
