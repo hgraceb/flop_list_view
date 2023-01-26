@@ -105,16 +105,11 @@ class _FlopListViewState extends State<FlopListView> {
         SliverList(
           key: _centerKey,
           delegate: SliverChildBuilderDelegate(
-            (context, index) => Stack(
-              children: [
-                _buildItem(centerIndex),
-                if (widget.anchorMask)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Container(color: Colors.purple.withOpacity(0.5)),
-                    ),
-                  ),
-              ],
+            (context, index) => Container(
+              foregroundDecoration: BoxDecoration(
+                color: widget.anchorMask ? Colors.purple.withOpacity(.5) : null,
+              ),
+              child: _buildItem(centerIndex),
             ),
             childCount: widget.itemCount > 0 ? 1 : 0,
           ),
