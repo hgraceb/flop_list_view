@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Fix the problem that anchor mask prevent scrolling.
+
 ## 0.0.2
 
 * Add debug mask display option.
