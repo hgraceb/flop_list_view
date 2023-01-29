@@ -202,10 +202,11 @@ class _FlopListViewState extends State<FlopListView> {
         }
         // 遍历获取最后符合条件的列表项作为锚点列表项
         if (item.leading <= widget.anchor && item.trailing >= widget.anchor) {
-          // 仅在 [ScrollPosition.activity] 为非 [DrivenScrollActivity] 时改变锚点
-          // 列表项，因为 [DrivenScrollActivity] 使用的是目标点的绝对位置，在改变锚点列表项
-          // 时调用 [ScrollPosition.correctBy] 后又会被马上还原，进而导致锚点列表项快速
-          // 变动，目前仅在使用 [ScrollPosition.animateTo] 方法时可能出现此问题。
+          // 仅在 [ScrollPosition.activity] 不为 [DrivenScrollActivity] 类型时才改变
+          // 锚点列表项，因为 [DrivenScrollActivity] 使用的是目标点的绝对位置，在改变锚点
+          // 列表项时调用 [ScrollPosition.correctBy] 后又会被马上还原，进而导致锚点列表项
+          // 快速变动，目前只有使用 [ScrollPosition.animateTo] 方法时可能出现此问题。
+          // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
           if (_scrollController.position.activity is! DrivenScrollActivity) {
             initialIndex = item.index;
           }
