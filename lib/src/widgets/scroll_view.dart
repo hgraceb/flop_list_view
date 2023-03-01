@@ -28,10 +28,14 @@ class UnboundedCustomScrollView extends CustomScrollView {
     super.restorationId,
     super.clipBehavior,
     this.onPerformLayout,
+    this.cacheExtentStyle = CacheExtentStyle.pixel,
   });
 
   /// [RenderObject.performLayout] 执行完成后的回调
   final VoidCallback? onPerformLayout;
+
+  /// 预渲染区域计算方式
+  final CacheExtentStyle cacheExtentStyle;
 
   @override
   @protected
@@ -46,6 +50,7 @@ class UnboundedCustomScrollView extends CustomScrollView {
       offset: offset,
       slivers: slivers,
       cacheExtent: cacheExtent,
+      cacheExtentStyle: cacheExtentStyle,
       center: center,
       anchor: anchor,
       onPerformLayout: onPerformLayout,

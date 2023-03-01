@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show CacheExtentStyle;
 import 'package:flutter/scheduler.dart';
 
 import 'widgets/scroll_view.dart';
@@ -13,12 +14,14 @@ class FlopListView extends StatefulWidget {
     this.controller,
     this.anchor = 0.0,
     this.trailing = true,
+    this.cacheExtent = 1.0,
     this.anchorMask = false,
     this.trailingMask = false,
-    required this.itemCount,
-    required this.itemBuilder,
     this.initialScrollIndex = 0,
     this.scrollDirection = Axis.vertical,
+    this.cacheExtentStyle = CacheExtentStyle.viewport,
+    required this.itemCount,
+    required this.itemBuilder,
   })  : assert(anchor >= 0.0 && anchor <= 1.0),
         assert(initialScrollIndex >= 0 && initialScrollIndex < itemCount);
 
@@ -51,6 +54,12 @@ class FlopListView extends StatefulWidget {
 
   /// 列表项构建器
   final IndexedWidgetBuilder itemBuilder;
+
+  /// 预渲染区域范围
+  final double cacheExtent;
+
+  /// 预渲染区域计算方式
+  final CacheExtentStyle cacheExtentStyle;
 
   @override
   State<StatefulWidget> createState() => _FlopListViewState();
@@ -92,8 +101,10 @@ class _FlopListViewState extends State<FlopListView> {
       center: _centerKey,
       physics: widget.physics,
       controller: _scrollController,
+      cacheExtent: widget.cacheExtent,
       onPerformLayout: _scheduleUpdateItems,
       scrollDirection: widget.scrollDirection,
+      cacheExtentStyle: widget.cacheExtentStyle,
       slivers: [
         if (centerIndex > 0)
           SliverList(

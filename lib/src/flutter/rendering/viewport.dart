@@ -4,14 +4,6 @@
 
 part of 'package:flop_list_view/src/widgets/viewport.dart';
 
-/// The unit of measurement for a [Viewport.cacheExtent].
-enum CacheExtentStyle {
-  /// Treat the [Viewport.cacheExtent] as logical pixels.
-  pixel,
-  /// Treat the [Viewport.cacheExtent] as a multiplier of the main axis extent.
-  viewport,
-}
-
 /// An interface for render objects that are bigger on the inside.
 ///
 /// Some render objects, such as [RenderViewport], present a portion of their
