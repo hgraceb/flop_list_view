@@ -1,8 +1,9 @@
 import 'dart:collection';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide SliverList;
 import 'package:flutter/scheduler.dart';
 
+import 'assembly/widgets/sliver.dart';
 import 'widgets/scroll_view.dart';
 import 'widgets/viewport.dart';
 
