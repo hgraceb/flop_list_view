@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Fix the unexpected initial position change when the anchor is not 0.
+
 ## 0.0.4
 
 * Add cacheExtent and cacheExtentStyle options.
