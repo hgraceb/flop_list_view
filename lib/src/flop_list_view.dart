@@ -67,7 +67,7 @@ class FlopListView extends StatefulWidget {
 
 class _FlopListViewState extends State<FlopListView> {
   late int _centerIndex;
-  late int _initialIndex;
+  late int _anchorIndex;
   bool _isItemsUpdating = false;
   final Key _listKey = UniqueKey();
   final Key _centerKey = UniqueKey();
@@ -78,7 +78,7 @@ class _FlopListViewState extends State<FlopListView> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _centerIndex = _initialIndex = widget.initialScrollIndex;
+    _centerIndex = _anchorIndex = widget.initialScrollIndex;
     _listController = widget.controller ?? FlopListController();
     _listController._attach(this);
   }
@@ -148,12 +148,12 @@ class _FlopListViewState extends State<FlopListView> {
   }
 
   int get centerIndex {
-    if (_centerIndex == _initialIndex) {
+    if (_centerIndex == _anchorIndex) {
       return _centerIndex;
     }
     for (final item in _listController.items) {
-      if (item.index == _initialIndex) {
-        _centerIndex = _initialIndex;
+      if (item.index == _anchorIndex) {
+        _centerIndex = _anchorIndex;
         final position = _scrollController.position;
         // 更新锚点列表项后校正当前位置
         position.correctBy(-item.offset - position.pixels);
@@ -188,8 +188,9 @@ class _FlopListViewState extends State<FlopListView> {
     }
     _isItemsUpdating = true;
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      FlopListItem? anchorItem;
       RenderViewportBase? viewport;
-      int initialIndex = _initialIndex;
+      int anchorIndex = _anchorIndex;
       final List<FlopListItem> items = [];
       for (int index = 0; index < widget.itemCount; index++) {
         final globalKey = _FlopListViewChildGlobalKey(_listKey, index);
@@ -207,6 +208,12 @@ class _FlopListViewState extends State<FlopListView> {
           offset: offset - viewport.offset.pixels,
           viewport: _scrollController.position.viewportDimension,
         );
+        // 保存当前列表项信息
+        items.add(item);
+        // 获取锚点列表项信息
+        if (item.index == anchorIndex) {
+          anchorItem ??= item;
+        }
         // 如果是最后一个列表项
         if (widget.trailing && item.index == widget.itemCount - 1) {
           trailingFraction = 1.0 - item.trailing;
@@ -219,13 +226,13 @@ class _FlopListViewState extends State<FlopListView> {
           // 快速变动，目前只有使用 [ScrollPosition.animateTo] 方法时可能出现此问题。
           // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
           if (_scrollController.position.activity is! DrivenScrollActivity) {
-            initialIndex = item.index;
+            anchorIndex = item.index;
           }
         }
-        items.add(item);
       }
-      if (initialIndex != _initialIndex) {
-        setState(() => _initialIndex = initialIndex);
+      // 锚点列表项出现位移再修改锚点列表项索引，避免初始化或者跳转时出现预期外的位移
+      if (anchorItem?.leading != 0.0 && anchorIndex != _anchorIndex) {
+        setState(() => _anchorIndex = anchorIndex);
       }
       _listController.updateItems(items);
       _isItemsUpdating = false;
@@ -241,7 +248,7 @@ class _FlopListViewState extends State<FlopListView> {
     }
     setState(() {
       _scrollController.jumpTo(0);
-      _centerIndex = _initialIndex = index;
+      _centerIndex = _anchorIndex = index;
       // 在锚点列表项改变后再重置列表末尾空白部分占比
       _trailingFraction = 1.0;
     });
